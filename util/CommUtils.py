@@ -1,6 +1,8 @@
 import numpy as np, cv2
 
 # 이미지 기울기 보정을 위한 함수
+# 인자값1 : 원본이미지 / 인자값2 : 얼굴 중심 좌표 / 인자값3 : 양쪽 눈 중심좌표
+# 결과값 : 보정된 이미지, 보정된 얼굴 중심 좌표
 def doCorrectionImage(image, face_center, eye_centers):
 
     #양쪽 눈 좌표
@@ -13,21 +15,27 @@ def doCorrectionImage(image, face_center, eye_centers):
 
     #역탄젠트로 기울기 계산
     angle = cv2.fastAtan2(dy, dx)
-    rot_mat = cv2.getRotationMatrix2D(face_center, angle, 1)
+    
+    # 계산된 기울기만큼 이미지 회전하기
+    rot = cv2.getRotationMatrix2D(face_center, angle, 1)
 
+    # 회전된 이미지를 원래 이미지 크기로 자르기
     size = image.shape[1::-1]
 
-    # 보정된 이미지
-    correction_image = cv2.warpAffine(image, rot_mat, size, cv2.INTER_CUBIC)
+    # 보정된 이미지 생성
+    correction_image = cv2.warpAffine(image, rot, size, cv2.INTER_CUBIC)
 
+    # 눈 위치 보정
     eye_centers = np.expand_dims(eye_centers, axis=0)
-    correction_centers = cv2.transform(eye_centers, rot_mat)
+    correction_centers = cv2.transform(eye_centers, rot)
     correction_centers = np.squeeze(correction_centers, axis=0)
 
     return correction_image, correction_centers
 
 # 얼굴이미지로부터 상세 객체 탐지를 위한 함수
-def doDetectObject(center, face):
+# 인자값1 : 얼굴 이미지 / 인자값2 : 얼굴 중심 좌표
+# 결과값 : 윗머리, 귓밑머리, 입술, 얼굴 전체
+def doDetectObject(face, center):
     w, h = face[2:4]
     center = np.array(center)
 
@@ -48,15 +56,15 @@ def doDetectObject(center, face):
     pt2 = center + face_avg_rate
 
     # 얼굴 전체 영역
-    face_all = define_roi(pt1, pt2-pt1)
+    face_all = roi(pt1, pt2-pt1)
 
     size = np.multiply(face_all[2:4], (1, 0.35))
 
     # 윗머리 영역
-    face_up = define_roi(pt1, size)
+    face_up = roi(pt1, size)
 
     # 귀밑머리 영역
-    face_down = define_roi(pt2-size, size)
+    face_down = roi(pt2-size, size)
 
     # 입술 중심 좌표(얼굴 중심의 약 30% 아래 위치함)
     lip_center = center + (0, h * 0.3)
@@ -68,21 +76,26 @@ def doDetectObject(center, face):
     lip2 = lip_center + lib_avg_rate
 
     # 입술 영역
-    lip = define_roi(lip1, lip2-lip1)
+    lip = roi(lip1, lip2-lip1)
 
     return [face_up, face_down, lip, face_all]
 
 # 이미지의 관심영역(ROI, Region of Interest)을 가져오기는 함수
-def define_roi(pt, size):
+# 인자값1 : 위치 / 인자값2 : 크기
+# 결과값 : 영역 값
+def roi(pt, size):
     return np.ravel([pt, size]).astype(int)
 
-# 타원형응로 마스크 생성하는 함수
+# 타원형으로 마스크 생성하는 함수
+# 인자값1 : 원본 이미지 / 인자값2 : 세부 영역(윗머리, 귓밑머리, 입술, 얼굴 전체 중 하나)
+# 인자값3 : 색상 / 인자값4 : 실선(사전 정의함)
+# 결과값 : 타원형 마스크를 그린 이미지
 def draw_ellipse(image, roi, color, thickness=cv2.FILLED):
 
     # 영역의 좌표 구하기
     x, y, w, h = roi
 
-    # 영역의 자표로 부터 중심 좔표 구하기
+    # 영역의 자표로 부터 중심 좌표 구하기
     center = (x + w // 2, y + h // 2)
 
     # 타원 크기 설정하기(사람 얼굴 객체의 일반적인 타원 비율은 45%임)

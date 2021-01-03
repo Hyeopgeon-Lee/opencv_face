@@ -1,16 +1,16 @@
 # 생성한 CommUtils에 정의한 함수를 사용하기 위해 사용
 from util.CommUtils import *
 
-# 마스크 생성시, 이미지를 수치화하기 위해 사용함
-import numpy as np
-
 # 인식률을 높이기 위한 전처리
 def preprocessing():
     # 분석하기 위한 이미지 불러오기
-    image = cv2.imread("image/107.jpg", cv2.IMREAD_COLOR)
+    image = cv2.imread("image/my_face2.jpg", cv2.IMREAD_COLOR)
 
     # 이미지가 존재하지 안으면, 에러 반환
     if image is None: return None, None
+
+    # 이미지 크기 사이즈 변경하기
+    image = cv2.resize(image, (700, 700))
 
     # 흑백사진으로 변경
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -66,12 +66,11 @@ if faces.any():
         eye_centers  = [[x+ex+ew//2, y+ey+eh//2] for ex,ey,ew,eh in eyes]
 
         # 사진의 기울기 보정
-       #correction_image, correction_center = doCorrectionImage(image, face_center, eye_centers )
         correction_image, correction_center = doCorrectionImage(image, face_center, eye_centers)
 
         # 얼굴 상세 객체(윗머리, 귀밑머리, 입술) 찾기
         # rois[0] : 윗머리 / rois[1] : 귓밑머리 / rois[2] : 입술 / rois[3] : 얼굴 전체
-        rois = doDetectObject(face_center, faces[0])
+        rois = doDetectObject(faces[0], face_center)
 
         # 보정된 사진 전체를 마스크만들기
         base_mask = np.full(correction_image.shape[:2], 255, np.uint8)
@@ -93,16 +92,13 @@ if faces.any():
         # 얼굴 영역별 이미지 생성
         subs = [correction_image[y:y+h, x:x+w] for x, y, w, h in rois]
 
-        for i, sub in enumerate(subs):
-            cv2.imshow('sub'+str(i), sub)
-
         # calcHist 파라미터 설명
         # 첫번째 파라미터(images) : 분석할 이미지 파일
         # 두번째 파라미터(Channel) : 컬러이미지(BGR)이면, 배열 값 3개로 정의
         # 세번째 파라미터(Mask) : 분석할 영역의 형태인 mask
-        # 네번째 파라미터(histSize) : 히스토그램의 hist 크기, 예 : 64면 256/64 = 4 => 픽셀 4개를 1개의 픽셀로 합쳐서 연산함
+        # 네번째 파라미터(histSize) : 히스토그램의 hist 크기, 예 : 128이면 256/128 = 2 => 픽셀 2개를 1개의 픽셀로 합쳐서 연산함
         # 다섯번째 파라미터(범위) : 컬러이미지(BGR)이면 0- 256까지 배열
-        hists = [cv2.calcHist([sub], [0, 1, 2], mask, (256, 256, 256), (0, 256, 0, 256, 0, 256)) for sub, mask
+        hists = [cv2.calcHist([sub], [0, 1, 2], mask, (128, 128, 128), (0, 256, 0, 256, 0, 256)) for sub, mask
                  in zip(subs, masks)]
 
         # 각 얼굴 영역별 히스트 값의 평균 구함
@@ -125,19 +121,13 @@ if faces.any():
         text = "Woman" if value else "Man"
 
         #이미지에 표기할 문구
-        cv2.putText(image, text, (0,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+        cv2.putText(image, text, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+
+        # 사이즈 변경된 이미지로 출력하기
+        cv2.imshow("MyFace", image)
 
     else:
         print("눈 미검출")
-
-    # 얼굴 검출 사각형 그리기
-    cv2.rectangle(image, faces[0], (255, 0, 0), 4)
-
-    # 이미지 크기 사이즈 변경하기
-    #resize_img = cv2.resize(image, (700, 700))
-
-    # 사이즈 변경된 이미지로 출력하기
-    cv2.imshow("MyFace", image)
 
 else:
     print("얼굴 미검출")

@@ -4,10 +4,13 @@ from util.CommUtils import *
 # 인식률을 높이기 위한 전처리
 def preprocessing():
     # 분석하기 위한 이미지 불러오기
-    image = cv2.imread("image/iu.jpg", cv2.IMREAD_COLOR)
+    image = cv2.imread("image/my_face2.jpg", cv2.IMREAD_COLOR)
 
     # 이미지가 존재하지 안으면, 에러 반환
     if image is None: return None, None
+
+    # 이미지 크기 사이즈 변경하기
+    image = cv2.resize(image, (700, 700))
 
     # 흑백사진으로 변경
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -66,7 +69,7 @@ if faces.any():
         correction_image, correction_center = doCorrectionImage(image, face_center, eye_centers )
 
         # 얼굴 상세 객체(윗머리, 귀밑머리, 입술) 찾기
-        rois = doDetectObject(face_center, faces[0])
+        rois = doDetectObject(faces[0], face_center)
 
         # 얼굴 검출 사각형 그리기
         cv2.rectangle(correction_image, rois[0], (255, 0, 255), 2)  # 윗머리 영역
@@ -82,21 +85,10 @@ if faces.any():
         # 보정된 얼굴 중심 그리기
         cv2.circle(correction_image, face_center, 3, (0, 0, 255), 2)  # 얼굴 중심 좌표
 
-        resize_img = cv2.resize(correction_image, (700, 700))
-
-        cv2.imshow("MyFace_Edit", resize_img)
+        cv2.imshow("MyFace_Edit", correction_image)
 
     else:
         print("눈 미검출")
-
-    # 얼굴 검출 사각형 그리기
-    #cv2.rectangle(image, faces[0], (255, 0, 0), 4)
-
-    # 이미지 크기 사이즈 변경하기
-    resize_img = cv2.resize(image, (700, 700))
-
-    # 사이즈 변경된 이미지로 출력하기
-    cv2.imshow("MyFace", resize_img)
 
 else:
     print("얼굴 미검출")

@@ -5,8 +5,8 @@ import cv2
 def preprocessing():
 
     # 분석하기 위한 이미지 불러오기
-    image = cv2.imread("image/my_face.jpg", cv2.IMREAD_COLOR)
-
+    image = cv2.imread("image/my_face2.jpg", cv2.IMREAD_COLOR)
+    
     # 이미지가 존재하지 안으면, 에러 반환
     if image is None: return None, None
 
@@ -46,11 +46,23 @@ if faces.any():
     #원본이미지로부터 얼굴영역 가져오기
     face_image = image[y:y + h, x:x + w]
 
-    # 얼굴 검출 사각형 그리기
-    cv2.rectangle(image, faces[0], (255, 0, 0), 4)
+    #모자이크 비율(픽셀크기 증가로 모자이크 만들기)
+    mosaic_rate = 30
 
-    # 사이즈 변경된 이미지로 출력하기
-    cv2.imshow("MyFace", image)
+    # 얼굴 영역의 픽셀을 mosaic_rate에 따라 나눠서 픽셀 확대
+    face_image = cv2.resize(face_image, (w // mosaic_rate, h // mosaic_rate))
+
+    # 확대한 얼굴 이미지(픽셀)을 얼굴 크기에 덮어쓰기
+    face_image = cv2.resize(face_image, (w, h), interpolation=cv2.INTER_AREA)
+
+    # 원본이미지에 모자이크 처리한 얼굴 이미지 붙이기
+    image[y:y + h, x:x + w] = face_image;
+
+    # 모자이크 처리된 이미지 파일 생성하기
+    cv2.imwrite("result/my_image_mosaic.jpg", image)
+
+    # 모자이크 처리된 이미지 보여주기
+    cv2.imshow("mosaic_image", cv2.imread("result/my_image_mosaic.jpg", cv2.IMREAD_COLOR))
 
 else: print("얼굴 미검출")
 

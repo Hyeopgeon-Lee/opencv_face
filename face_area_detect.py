@@ -1,16 +1,16 @@
 # 생성한 CommUtils에 정의한 함수를 사용하기 위해 사용
 from util.CommUtils import *
 
-# 마스크 생성시, 이미지를 수치화하기 위해 사용함
-import numpy as np
-
 # 인식률을 높이기 위한 전처리
 def preprocessing():
     # 분석하기 위한 이미지 불러오기
-    image = cv2.imread("image/iu.jpg", cv2.IMREAD_COLOR)
+    image = cv2.imread("image/my_face2.jpg", cv2.IMREAD_COLOR)
 
     # 이미지가 존재하지 안으면, 에러 반환
     if image is None: return None, None
+
+    # 이미지 크기 사이즈 변경하기
+    image = cv2.resize(image, (700, 700))
 
     # 흑백사진으로 변경
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -19,8 +19,6 @@ def preprocessing():
     gray = cv2.equalizeHist(gray)
 
     return image, gray
-
-
 
 # 학습된 얼굴 정면검출기 사용하기
 face_cascade = cv2.CascadeClassifier("data/haarcascade_frontalface_alt2.xml")
@@ -50,6 +48,9 @@ if faces.any():
     # 원본이미지로부터 얼굴영역 가져오기
     face_image = image[y:y + h, x:x + w]
 
+    cv2.imshow("face_image", face_image)
+
+
     # 눈 검출 수행하기(정확도 높이는 방법의 아래 파라미터를 조절함)
     # 눈 검출은 얼굴 이미지 영역만 불러와 분석 수행
     # scaleFactor : 1.15
@@ -71,7 +72,7 @@ if faces.any():
 
         # 얼굴 상세 객체(윗머리, 귀밑머리, 입술) 찾기
         # rois[0] : 윗머리 / rois[1] : 귓밑머리 / rois[2] : 입술 / rois[3] : 얼굴 전체
-        rois = doDetectObject(face_center, faces[0])
+        rois = doDetectObject(faces[0], face_center)
 
         # 보정된 사진 전체를 마스크만들기
         base_mask = np.full(correction_image.shape[:2], 255, np.uint8)
@@ -82,8 +83,7 @@ if faces.any():
 
         # 입술 마스크 만들기(사람의 얼굴은 평균 약 45% 타원으로 구성됨)
         # 입술 영역을 연산하기 위해 색상을 흰색(값 : 255)으로 설정함
-        lip_mask = draw_ellipse2(np.copy(base_mask), rois[2], 255)
-        #cv2.imshow("lip_mask", lip_mask)
+        lip_mask = draw_ellipse(np.copy(base_mask), rois[2], 255)
 
         # 윗머리용 얼굴전체 마스크, 귓밑머리용 얼굴전체 마스크, 입술마스크, 입술 제외용 마스크를 masks 저장
         masks = [face_mask, face_mask, lip_mask, ~lip_mask]
@@ -104,15 +104,6 @@ if faces.any():
 
     else:
         print("눈 미검출")
-
-    # 얼굴 검출 사각형 그리기
-    cv2.rectangle(image, faces[0], (255, 0, 0), 4)
-
-    # 이미지 크기 사이즈 변경하기
-    resize_img = cv2.resize(image, (700, 700))
-
-    # 사이즈 변경된 이미지로 출력하기
-    cv2.imshow("MyFace", resize_img)
 
 else:
     print("얼굴 미검출")

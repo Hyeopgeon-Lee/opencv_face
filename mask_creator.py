@@ -1,9 +1,6 @@
 # 생성한 CommUtils에 정의한 함수를 사용하기 위해 사용
 from util.CommUtils import *
 
-# 마스크 생성시, 이미지를 수치화하기 위해 사용함
-import numpy as np
-
 # 인식률을 높이기 위한 전처리
 def preprocessing():
     # 분석하기 위한 이미지 불러오기
@@ -11,6 +8,9 @@ def preprocessing():
 
     # 이미지가 존재하지 안으면, 에러 반환
     if image is None: return None, None
+
+    # 이미지 크기 사이즈 변경하기
+    image = cv2.resize(image, (700, 700))
 
     # 흑백사진으로 변경
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -71,7 +71,7 @@ if faces.any():
 
         # 얼굴 상세 객체(윗머리, 귀밑머리, 입술) 찾기
         # rois[0] : 윗머리 / rois[1] : 귓밑머리 / rois[2] : 입술 / rois[3] : 얼굴 전체
-        rois = doDetectObject(face_center, faces[0])
+        rois = doDetectObject(faces[0], face_center)
 
         # 보정된 사진 전체를 마스크만들기
         base_mask = np.full(correction_image.shape[:2], 255, np.uint8)
@@ -92,19 +92,10 @@ if faces.any():
 
         # 최종 마스크 확인
         for i, mask in enumerate(masks):
-            cv2.imshow('mask' + str(i), mask)
+            cv2.imshow("mask" + str(i), mask)
 
     else:
         print("눈 미검출")
-
-    # 얼굴 검출 사각형 그리기
-    cv2.rectangle(image, faces[0], (255, 0, 0), 4)
-
-    # 이미지 크기 사이즈 변경하기
-    resize_img = cv2.resize(image, (700, 700))
-
-    # 사이즈 변경된 이미지로 출력하기
-    cv2.imshow("MyFace", resize_img)
 
 else:
     print("얼굴 미검출")
