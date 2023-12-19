@@ -62,7 +62,7 @@ if faces.any():
     # 눈을 찾을 수 있다면,
     if len(eyes) == 2:
         # 얼굴 가운데
-        face_center = (x + w // 2, y + h // 2)
+        face_center = (x + w // 2.0, y + h // 2.0)  # 보정용 값(데이터 타입이 cv2.typing.Point2f 변경됨)
 
         # 양쪽 눈 가운데 위치 값 가져오기
         eye_centers  = [[x+ex+ew//2, y+ey+eh//2] for ex,ey,ew,eh in eyes]
