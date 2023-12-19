@@ -1,5 +1,7 @@
 import cv2
-from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 # 불러올 이미지 경로
 image_file = "image/my_face.jpg"
