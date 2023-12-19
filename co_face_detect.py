@@ -60,7 +60,8 @@ if faces.any():
     # 눈을 찾을 수 있다면,
     if len(eyes) == 2:
         # 얼굴 가운데
-        face_center = (x + w // 2, y + h // 2)
+
+        face_center = (x + w // 2.0, y + h // 2.0) # 보정용 값(데이터 타입이 cv2.typing.Point2f 변경됨)
 
         # 양쪽 눈 가운데 위치 값 가져오기
         eye_centers  = [[x+ex+ew//2, y+ey+eh//2] for ex,ey,ew,eh in eyes]
@@ -72,7 +73,9 @@ if faces.any():
         cv2.circle(correction_image, tuple(correction_center[0]), 5, (0, 255, 0), 2)  # 보정 눈 좌표
         cv2.circle(correction_image, tuple(correction_center[1]), 5, (0, 255, 0), 2)  # 보정 눈 좌표
 
+
         # 보정된 얼굴 줌심 그리기
+        face_center = (x + w // 2, y + h // 2)  # 얼굴 중심 그리기 위한 얼굴 센터값 : Int 타입
         cv2.circle(correction_image, face_center, 3, (0, 0, 255), 2)  # 얼굴 중심 좌표
 
         # 보정된 얼굴 보여주기
